@@ -1,16 +1,23 @@
-name: Telegram Notify
+name: Notify on Release Upload
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'releases/**'
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Telegram Notification
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send Release File to Telegram
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="🚀 تم رفع تحديث جديد على المستودع: ${{ github.repository }}"
+          FILE=$(find releases -type f -name "*.txt" | head -n 1)
+          curl -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -F document=@"$FILE" \
+          -F caption="🚀 تحديث جديد متوفر: $(basename "$FILE")" \
+          "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
